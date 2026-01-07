@@ -1,14 +1,48 @@
+import asyncio
+import datetime
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import dns.resolver
-
+from datetime import datetime, timezone, timedelta
+from pys.config import CLIENT_LIMIT
 from pys.db import get_db
+
+
+
 
 
 def get_resolver_from_db():
     db = get_db()
     docs = list(db.resolvers.find({}))
     return docs
+
+def check_client_limit(client_ip_address:str):
+
+    db = get_db()
+
+    now = datetime.now(timezone.utc)
+
+    one_min_ago = now - timedelta(minutes=1)
+
+    count = db.results.count_documents({
+        "client_ip_address": client_ip_address,
+        "created_at": {"$gte": one_min_ago}
+    })
+
+
+    limit = CLIENT_LIMIT
+
+    if int(count) >= int(limit):
+        return False
+    else:
+        return True
+
+def insert_result_to_db(data:dict):
+
+    db = get_db()
+
+    db.results.insert_one(data)
+
+    return True
 
 
 def single_query(server: dict, query_name: str, query_type: str):
@@ -53,26 +87,10 @@ def single_query(server: dict, query_name: str, query_type: str):
             "latency_ms": round(latency_ms, 2),
             "ttl": None,
             "status": False,
-            "result": e,
+            "result": str(e),
         }
     return data
 
 
-def check_dns(query_name:str, query_type:str):
-
-    dns_servers = get_resolver_from_db()
-
-
-    with ThreadPoolExecutor(max_workers=20) as pool:
-
-        results = []
-
-        futures = [pool.submit(single_query, s, query_name, query_type) for s in dns_servers]
-
-        for future in as_completed(futures):
-            results.append(future.result())
-
-    print(results)
-    return results
 
 
