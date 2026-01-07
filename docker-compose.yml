@@ -1,0 +1,34 @@
+services:
+  dns-checker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dns-checker
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "3654:3654"
+    depends_on:
+      - mongo
+    networks:
+      - dnsnet
+
+  mongo:
+    image: mongo:7
+    container_name: dns-checker-mongo
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27018:27017"
+    networks:
+      - dnsnet
+
+networks:
+  dnsnet:
+
+volumes:
+  mongo_data:
