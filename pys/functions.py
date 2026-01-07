@@ -3,7 +3,7 @@ import datetime
 import time
 import dns.resolver
 from datetime import datetime, timezone, timedelta
-from pys.config import CLIENT_LIMIT
+from pys.config import  CLIENT_DAY_LIMIT, CLIENT_HOUR_LIMIT, CLIENT_MINUTE_LIMIT
 from pys.db import get_db
 
 
@@ -19,22 +19,44 @@ def check_client_limit(client_ip_address:str):
 
     db = get_db()
 
+
+
     now = datetime.now(timezone.utc)
 
+    one_day_ago = now - timedelta(days=1)
+    one_hour_ago = now - timedelta(minutes=60)
     one_min_ago = now - timedelta(minutes=1)
 
-    count = db.results.count_documents({
+
+
+    day_count = db.results.count_documents({
+        "client_ip_address": client_ip_address,
+        "created_at": {"$gte": one_day_ago}
+    })
+
+    hour_count = db.results.count_documents({
+        "client_ip_address": client_ip_address,
+        "created_at": {"$gte": one_hour_ago}
+    })
+
+    minute_count = db.results.count_documents({
         "client_ip_address": client_ip_address,
         "created_at": {"$gte": one_min_ago}
     })
 
 
-    limit = CLIENT_LIMIT
-
-    if int(count) >= int(limit):
-        return False
+    if int(day_count) >= int(CLIENT_DAY_LIMIT):
+        return False, "day_limit"
+    if int(hour_count) >= int(CLIENT_HOUR_LIMIT):
+        return False, "hour_limit"
+    if int(minute_count) >= int(CLIENT_MINUTE_LIMIT):
+        return False, "minute_limit"
     else:
-        return True
+        return True,None
+
+
+
+
 
 def insert_result_to_db(data:dict):
 

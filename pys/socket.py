@@ -66,10 +66,10 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             if client_id in clients:
                 await self.write(json.dumps({"client_id": self.client_id, "type":"message", "text":"Query Name or Type Can Not Be Empty."}))
 
-        check_limit = check_client_limit(self.client_ip_address)
+        check_limit,check_limit_message = check_client_limit(self.client_ip_address)
 
         if not check_limit:
-            await self.write_message(json.dumps({"client_id": self.client_id, "type": "message", "text": "You Have No Limit"}))
+            await self.write_message(json.dumps({"client_id": self.client_id, "type": "message", "text": check_limit_message}))
             return
 
         if not client_id or client_id not in clients:
