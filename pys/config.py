@@ -17,3 +17,5 @@ MONGO_AUTH_SOURCE = (os.getenv("MONGO_AUTH_SOURCE") or "").strip()
 
 
 MONGODB_URI = os.getenv("MONGODB_URI")
+
+CLIENT_LIMIT = os.getenv("CLIENT_LIMIT")
