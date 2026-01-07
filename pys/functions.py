@@ -1,13 +1,11 @@
-import asyncio
 import datetime
 import time
-import dns.resolver
 from datetime import datetime, timezone, timedelta
-from pys.config import  CLIENT_DAY_LIMIT, CLIENT_HOUR_LIMIT, CLIENT_MINUTE_LIMIT
+
+import dns.resolver
+
+from pys.config import CLIENT_DAY_LIMIT, CLIENT_HOUR_LIMIT, CLIENT_MINUTE_LIMIT, RESOLVER_TIMEOUT, RESOLVER_LIFETIME
 from pys.db import get_db
-
-
-
 
 
 def get_resolver_from_db():
@@ -15,19 +13,15 @@ def get_resolver_from_db():
     docs = list(db.resolvers.find({}))
     return docs
 
-def check_client_limit(client_ip_address:str):
 
+def check_client_limit(client_ip_address: str):
     db = get_db()
-
-
 
     now = datetime.now(timezone.utc)
 
     one_day_ago = now - timedelta(days=1)
     one_hour_ago = now - timedelta(minutes=60)
     one_min_ago = now - timedelta(minutes=1)
-
-
 
     day_count = db.results.count_documents({
         "client_ip_address": client_ip_address,
@@ -44,7 +38,6 @@ def check_client_limit(client_ip_address:str):
         "created_at": {"$gte": one_min_ago}
     })
 
-
     if int(day_count) >= int(CLIENT_DAY_LIMIT):
         return False, "day_limit"
     if int(hour_count) >= int(CLIENT_HOUR_LIMIT):
@@ -52,14 +45,10 @@ def check_client_limit(client_ip_address:str):
     if int(minute_count) >= int(CLIENT_MINUTE_LIMIT):
         return False, "minute_limit"
     else:
-        return True,None
+        return True, None
 
 
-
-
-
-def insert_result_to_db(data:dict):
-
+def insert_result_to_db(data: dict):
     db = get_db()
 
     db.results.insert_one(data)
@@ -75,9 +64,8 @@ def single_query(server: dict, query_name: str, query_type: str):
 
     resolver = dns.resolver.Resolver(configure=False)
     resolver.nameservers = [server_ip]
-    resolver.timeout = 1.5
-    resolver.lifetime = 3
-
+    resolver.timeout = RESOLVER_TIMEOUT
+    resolver.lifetime = RESOLVER_LIFETIME
     data = {}
     start = time.perf_counter()
 
@@ -112,7 +100,3 @@ def single_query(server: dict, query_name: str, query_type: str):
             "result": str(e),
         }
     return data
-
-
-
-
