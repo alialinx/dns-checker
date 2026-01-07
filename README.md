@@ -1,5 +1,7 @@
 # DNS Checker
 
+https://dns-checker.alialin.me/
+
 This project is a backend service that performs DNS queries against multiple DNS resolvers and streams the results to clients in real time via WebSocket.
 
 It is designed as a learning project to explore DNS behavior, concurrency, WebSocket communication, and basic rate limiting.
