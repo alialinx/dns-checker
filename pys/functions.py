@@ -66,29 +66,38 @@ def single_query(server: dict, query_name: str, query_type: str):
     resolver.nameservers = [server_ip]
     resolver.timeout = RESOLVER_TIMEOUT
     resolver.lifetime = RESOLVER_LIFETIME
-    data = {}
     start = time.perf_counter()
 
     try:
         answers = resolver.resolve(query_name, query_type)
 
-        for answer in answers:
-            latency_ms = (time.perf_counter() - start) * 1000
-            ttl = answers.rrset.ttl if answers.rrset else None
-            data = {
-                "country": country,
-                "name": name,
-                "server_ip": server_ip,
-                "flag": flag,
-                "latency_ms": round(latency_ms, 2),
-                "ttl": ttl,
-                "status": True,
-                "result": answer.to_text(),
-            }
+        latency_ms = (time.perf_counter() - start) * 1000
+        ttl = answers.rrset.ttl if answers.rrset else None
+
+        results = [a.to_text() for a in answers]
+
+        result_text = ", ".join(results) if results else ""
+
+        return {
+            "country": country,
+            "name": name,
+            "server_ip": server_ip,
+            "flag": flag,
+            "latency_ms": round(latency_ms, 2),
+            "ttl": ttl,
+            "status": True,
+            "result": result_text,
+            "results": results,
+            "result_count": len(results),
+        }
+
+
 
 
     except Exception as e:
         latency_ms = (time.perf_counter() - start) * 1000
+        err = str(e)
+
         data = {
             "country": country,
             "name": name,
@@ -97,6 +106,9 @@ def single_query(server: dict, query_name: str, query_type: str):
             "latency_ms": round(latency_ms, 2),
             "ttl": None,
             "status": False,
-            "result": str(e),
+            "result": err,
+            "results": [err],
+            "result_count": 0,
         }
+
     return data
